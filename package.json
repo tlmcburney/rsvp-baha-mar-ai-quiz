@@ -1,0 +1,12 @@
+{
+  "name": "rsvp-quiz",
+  "version": "1.0.0",
+  "description": "RSVP Baha Mar conference quiz app",
+  "private": true,
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@supabase/supabase-js": "^2.49.0",
+    "qrcode": "^1.5.4",
+    "resend": "^4.1.0"
+  }
+}
