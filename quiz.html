@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0a1628">
+  <title>RSVP Baha Mar — Quiz</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="progress-container">
+    <div class="progress-fill" id="progress-fill"></div>
+  </div>
+
+  <div class="logo-bar">
+    <div class="logo-mcburney" role="img" aria-label="McBurney Group Logo">McBurney</div>
+    <div class="logo-alain" role="img" aria-label="Alain Martinez Logo">Alain M.</div>
+  </div>
+
+  <div class="quiz-viewport">
+    <div class="quiz-track" id="quiz-track"></div>
+  </div>
+
+  <div class="error-message" id="submit-error">
+    Something went wrong. <button class="btn btn-primary mt-16" id="retry-btn">Try Again</button>
+  </div>
+
+  <script>
+    // ── Guard: redirect if no user data ──
+    var userData = null;
+    try {
+      userData = JSON.parse(sessionStorage.getItem('rsvp_user'));
+    } catch (e) {}
+    if (!userData || !userData.name || !userData.email) {
+      window.location.href = '/';
+    }
+
+    // ── Questions (frontend copy — must match questions.mjs) ──
+    var questions = [
+      { id: 'a1', text: 'Can you deliver your pitch in 10 seconds?' },
+      { id: 'a2', text: 'If a publication asked for a 100-word bio, do you have one ready?' },
+      { id: 'a3', text: 'Can you clearly define your ideal customer?' },
+      { id: 'a4', text: 'Can your business run 100% without you?' },
+      { id: 'a5', text: 'Is your business ready for AI?' },
+      { id: 'a6', text: 'Is your client journey clearly defined?' },
+      { id: 'a7', text: 'Do you have a brand story?' },
+      { id: 'a8', text: 'Do you have your Unique Value Proposition clearly defined?' },
+      { id: 'a9', text: 'Do you have a Brand Guide document created for your company?' },
+      { id: 'a10', text: 'Is your social media and website optimized?' },
+      { id: 't1', text: 'Do you spend more time on your business or in your business?' },
+      { id: 't2', text: 'Are you spending hours doing manual or repetitive tasks every single day, week, or event?' },
+      { id: 't3', text: 'Do you have an automated follow-up workflow after a client inquiry?' },
+      { id: 't4', text: 'Do you have a system that captures action items from client calls automatically?' },
+      { id: 't5', text: 'Do you track decisions and risks from every client conversation?' },
+      { id: 't6', text: 'Do all of your systems talk to one another?' },
+      { id: 't7', text: 'Does every client go through the same experience with you, or does it depend on how busy you are?' },
+      { id: 't8', text: 'If you were out sick for a week, would your business keep moving without you?' },
+      { id: 't9', text: 'When a team member or contractor leaves, does their knowledge stay with your business?' },
+      { id: 't10', text: 'Do you have a plan to get 10 extra hours a week back?' }
+    ];
+
+    var currentIndex = 0;
+    var answers = {};
+    var isTransitioning = false;
+    var isSubmitting = false;
+    var track = document.getElementById('quiz-track');
+    var progressFill = document.getElementById('progress-fill');
+
+    // ── Build question cards ──
+    questions.forEach(function (q, i) {
+      var card = document.createElement('div');
+      card.className = 'quiz-card';
+      card.innerHTML =
+        '<div class="quiz-progress">Question ' + (i + 1) + ' of ' + questions.length + '</div>' +
+        '<div class="quiz-question">' + q.text + '</div>' +
+        '<div class="quiz-buttons">' +
+          '<button class="btn-yes" data-index="' + i + '" data-answer="yes">YES</button>' +
+          '<button class="btn-no" data-index="' + i + '" data-answer="no">NO</button>' +
+        '</div>';
+      track.appendChild(card);
+    });
+
+    // ── Handle answer clicks ──
+    track.addEventListener('click', function (e) {
+      var btn = e.target;
+      if (!btn.dataset.answer) return;
+      if (isTransitioning || isSubmitting) return;
+
+      var index = parseInt(btn.dataset.index, 10);
+      if (index !== currentIndex) return;
+
+      var answer = btn.dataset.answer;
+      answers[questions[index].id] = answer;
+
+      if (index < questions.length - 1) {
+        // Advance to next question
+        isTransitioning = true;
+        disableButtons(index);
+        currentIndex++;
+        updateProgress();
+        track.style.transform = 'translateX(-' + (currentIndex * 100) + 'vw)';
+      } else {
+        // Last question — submit
+        disableButtons(index);
+        submitQuiz();
+      }
+    });
+
+    // ── Re-enable after transition ──
+    track.addEventListener('transitionend', function () {
+      isTransitioning = false;
+    });
+
+    // ── Progress bar ──
+    function updateProgress() {
+      var pct = Math.round(((currentIndex) / questions.length) * 100);
+      progressFill.style.width = pct + '%';
+    }
+
+    // ── Disable buttons on a card ──
+    function disableButtons(index) {
+      var card = track.children[index];
+      var btns = card.querySelectorAll('button');
+      for (var b = 0; b < btns.length; b++) {
+        btns[b].disabled = true;
+      }
+    }
+
+    // ── Submit quiz ──
+    function submitQuiz() {
+      isSubmitting = true;
+      var errorEl = document.getElementById('submit-error');
+      errorEl.classList.remove('visible');
+
+      var payload = {
+        name: userData.name,
+        email: userData.email,
+        phone: userData.phone,
+        industry: userData.industry,
+        answers: answers
+      };
+
+      fetch('/api/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(function (res) {
+        if (!res.ok) throw new Error('Server error: ' + res.status);
+        return res.json();
+      })
+      .then(function () {
+        sessionStorage.setItem('rsvp_email', userData.email);
+        window.location.href = '/complete.html';
+      })
+      .catch(function (err) {
+        console.error('Submit failed:', err);
+        isSubmitting = false;
+        errorEl.classList.add('visible');
+        // Re-enable last question buttons for retry
+        var lastCard = track.children[questions.length - 1];
+        var btns = lastCard.querySelectorAll('button');
+        for (var b = 0; b < btns.length; b++) {
+          btns[b].disabled = false;
+        }
+      });
+    }
+
+    // ── Retry button ──
+    document.getElementById('retry-btn').addEventListener('click', function () {
+      submitQuiz();
+    });
+
+    updateProgress();
+  </script>
+</body>
+</html>

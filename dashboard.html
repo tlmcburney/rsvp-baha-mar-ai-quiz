@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0a1628">
+  <title>RSVP Baha Mar — Dashboard</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="dashboard">
+    <div class="logo-bar">
+      <div class="logo-mcburney" role="img" aria-label="McBurney Group Logo">McBurney</div>
+      <div class="logo-alain" role="img" aria-label="Alain Martinez Logo">Alain M.</div>
+    </div>
+
+    <div class="dashboard-header">
+      <div>
+        <div class="response-count"><span id="total-count">0</span> Responses</div>
+        <div class="last-updated" id="last-updated">Waiting for data...</div>
+        <div class="connection-status" id="connection-status">Connection lost — retrying...</div>
+      </div>
+    </div>
+
+    <div class="industry-pills" id="industry-pills"></div>
+
+    <!-- Alain's questions -->
+    <div class="question-section">
+      <div class="section-title">Brand &amp; Positioning — Alain Martinez</div>
+      <div id="alain-questions"></div>
+    </div>
+
+    <!-- Travis's questions -->
+    <div class="question-section">
+      <div class="section-title">Operations &amp; Automation — Travis McBurney</div>
+      <div id="travis-questions"></div>
+    </div>
+
+    <!-- AI Insights -->
+    <div class="insights-panel">
+      <div class="insights-title">AI Insights</div>
+      <ul class="insights-list" id="insights-list">
+        <li class="insights-loading">Waiting for responses...</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Focus overlay -->
+  <div class="focus-overlay" id="focus-overlay">
+    <div class="focus-close-hint">Tap anywhere or press ESC to close</div>
+    <div class="focus-question" id="focus-question"></div>
+    <div class="focus-bar-container">
+      <div class="focus-bar-yes" id="focus-bar-yes"></div>
+      <div class="focus-bar-no" id="focus-bar-no"></div>
+    </div>
+    <div class="focus-industries" id="focus-industries"></div>
+  </div>
+
+  <script>
+    // ── Question definitions (dashboard copy) ──
+    var questions = [
+      { id: 'a1', text: 'Can you deliver your pitch in 10 seconds?', section: 'alain' },
+      { id: 'a2', text: 'If a publication asked for a 100-word bio, do you have one ready?', section: 'alain' },
+      { id: 'a3', text: 'Can you clearly define your ideal customer?', section: 'alain' },
+      { id: 'a4', text: 'Can your business run 100% without you?', section: 'alain' },
+      { id: 'a5', text: 'Is your business ready for AI?', section: 'alain' },
+      { id: 'a6', text: 'Is your client journey clearly defined?', section: 'alain' },
+      { id: 'a7', text: 'Do you have a brand story?', section: 'alain' },
+      { id: 'a8', text: 'Do you have your Unique Value Proposition clearly defined?', section: 'alain' },
+      { id: 'a9', text: 'Do you have a Brand Guide document created for your company?', section: 'alain' },
+      { id: 'a10', text: 'Is your social media and website optimized?', section: 'alain' },
+      { id: 't1', text: 'Do you spend more time on your business or in your business?', section: 'travis' },
+      { id: 't2', text: 'Are you spending hours doing manual or repetitive tasks every single day, week, or event?', section: 'travis' },
+      { id: 't3', text: 'Do you have an automated follow-up workflow after a client inquiry?', section: 'travis' },
+      { id: 't4', text: 'Do you have a system that captures action items from client calls automatically?', section: 'travis' },
+      { id: 't5', text: 'Do you track decisions and risks from every client conversation?', section: 'travis' },
+      { id: 't6', text: 'Do all of your systems talk to one another?', section: 'travis' },
+      { id: 't7', text: 'Does every client go through the same experience with you, or does it depend on how busy you are?', section: 'travis' },
+      { id: 't8', text: 'If you were out sick for a week, would your business keep moving without you?', section: 'travis' },
+      { id: 't9', text: 'When a team member or contractor leaves, does their knowledge stay with your business?', section: 'travis' },
+      { id: 't10', text: 'Do you have a plan to get 10 extra hours a week back?', section: 'travis' }
+    ];
+
+    var lastData = null;
+    var lastInsights = null;
+
+    // ── Pre-render question rows ──
+    var alainContainer = document.getElementById('alain-questions');
+    var travisContainer = document.getElementById('travis-questions');
+
+    questions.forEach(function (q) {
+      var row = document.createElement('div');
+      row.className = 'question-row';
+      row.id = 'row-' + q.id;
+      row.dataset.questionId = q.id;
+      row.innerHTML =
+        '<div class="question-label"><strong>' + q.id.toUpperCase() + '</strong> ' + q.text + '</div>' +
+        '<div class="bar-container">' +
+          '<div class="bar-yes" id="bar-yes-' + q.id + '" style="width:0%"></div>' +
+          '<div class="bar-no" id="bar-no-' + q.id + '" style="width:0%"></div>' +
+        '</div>';
+
+      if (q.section === 'alain') {
+        alainContainer.appendChild(row);
+      } else {
+        travisContainer.appendChild(row);
+      }
+
+      row.addEventListener('click', function () {
+        openFocusView(q.id);
+      });
+    });
+
+    // ── Poll results every 10s ──
+    function fetchResults() {
+      fetch('/api/results')
+        .then(function (res) {
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.json();
+        })
+        .then(function (data) {
+          lastData = data;
+          renderResults(data);
+          document.getElementById('connection-status').classList.remove('visible');
+          document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+        })
+        .catch(function (err) {
+          console.error('Results fetch failed:', err);
+          document.getElementById('connection-status').classList.add('visible');
+        });
+    }
+
+    function renderResults(data) {
+      document.getElementById('total-count').textContent = data.total;
+
+      // Industry pills
+      var pillsEl = document.getElementById('industry-pills');
+      pillsEl.innerHTML = '';
+      data.industries.forEach(function (ind) {
+        var pill = document.createElement('div');
+        pill.className = 'industry-pill';
+        pill.innerHTML = ind.name + ' <span>' + ind.count + '</span>';
+        pillsEl.appendChild(pill);
+      });
+
+      // Question bars
+      data.questions.forEach(function (q) {
+        var yesBar = document.getElementById('bar-yes-' + q.id);
+        var noBar = document.getElementById('bar-no-' + q.id);
+        if (data.total === 0) {
+          yesBar.style.width = '0%';
+          noBar.style.width = '0%';
+          yesBar.textContent = '';
+          noBar.textContent = '';
+        } else {
+          yesBar.style.width = q.yesPct + '%';
+          noBar.style.width = q.noPct + '%';
+          yesBar.textContent = q.yesPct >= 10 ? q.yesPct + '% Yes' : '';
+          noBar.textContent = q.noPct >= 10 ? q.noPct + '% No' : '';
+        }
+      });
+    }
+
+    // ── Poll insights every 60s ──
+    function fetchInsights() {
+      fetch('/api/insights')
+        .then(function (res) {
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.json();
+        })
+        .then(function (data) {
+          if (data.insights && data.insights.length > 0) {
+            lastInsights = data.insights;
+            renderInsights(data.insights);
+          }
+        })
+        .catch(function (err) {
+          console.error('Insights fetch failed:', err);
+          if (!lastInsights) {
+            var list = document.getElementById('insights-list');
+            list.innerHTML = '<li class="insights-error">Insights temporarily unavailable</li>';
+          }
+        });
+    }
+
+    function renderInsights(insights) {
+      var list = document.getElementById('insights-list');
+      list.innerHTML = '';
+      insights.forEach(function (text) {
+        var li = document.createElement('li');
+        li.textContent = text;
+        list.appendChild(li);
+      });
+    }
+
+    // ── Focus overlay ──
+    var focusOverlay = document.getElementById('focus-overlay');
+
+    function openFocusView(qId) {
+      if (!lastData) return;
+
+      var qData = null;
+      for (var i = 0; i < lastData.questions.length; i++) {
+        if (lastData.questions[i].id === qId) {
+          qData = lastData.questions[i];
+          break;
+        }
+      }
+      if (!qData) return;
+
+      document.getElementById('focus-question').textContent = qData.text;
+
+      var focusYes = document.getElementById('focus-bar-yes');
+      var focusNo = document.getElementById('focus-bar-no');
+      focusYes.style.width = qData.yesPct + '%';
+      focusNo.style.width = qData.noPct + '%';
+      focusYes.textContent = qData.yesPct + '% Yes';
+      focusNo.textContent = qData.noPct + '% No';
+
+      // Industry breakdown
+      var indContainer = document.getElementById('focus-industries');
+      indContainer.innerHTML = '';
+
+      lastData.industries.forEach(function (ind) {
+        if (ind.count < 2) return;
+        var iq = ind.questions[qId];
+        if (!iq) return;
+        var total = iq.yes + iq.no;
+        if (total === 0) return;
+        var yesPct = Math.round((iq.yes / total) * 100);
+        var noPct = 100 - yesPct;
+
+        var row = document.createElement('div');
+        row.className = 'focus-industry-row';
+        row.innerHTML =
+          '<div class="focus-industry-label">' + ind.name + ' (' + ind.count + ')</div>' +
+          '<div class="focus-industry-bar">' +
+            '<div class="focus-bar-yes" style="width:' + yesPct + '%">' + (yesPct >= 10 ? yesPct + '%' : '') + '</div>' +
+            '<div class="focus-bar-no" style="width:' + noPct + '%">' + (noPct >= 10 ? noPct + '%' : '') + '</div>' +
+          '</div>';
+        indContainer.appendChild(row);
+      });
+
+      focusOverlay.classList.add('active');
+    }
+
+    function closeFocusView() {
+      focusOverlay.classList.remove('active');
+    }
+
+    focusOverlay.addEventListener('click', function (e) {
+      if (e.target === focusOverlay) {
+        closeFocusView();
+      }
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        closeFocusView();
+      }
+    });
+
+    // Also close when tapping the close hint or the backdrop area
+    document.querySelector('.focus-close-hint').addEventListener('click', closeFocusView);
+
+    // ── Start polling ──
+    fetchResults();
+    fetchInsights();
+    setInterval(fetchResults, 10000);
+    setInterval(fetchInsights, 60000);
+  </script>
+</body>
+</html>

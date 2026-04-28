@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0a1628">
+  <title>RSVP Baha Mar — Business Operations Workshop</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="logo-bar">
+    <div class="logo-mcburney" role="img" aria-label="McBurney Group Logo">McBurney</div>
+    <div class="logo-alain" role="img" aria-label="Alain Martinez Logo">Alain M.</div>
+  </div>
+
+  <div class="container">
+    <h1 class="page-title">Business Operations Workshop</h1>
+    <p class="page-subtitle">20 quick questions. Personalized results sent to your email.</p>
+
+    <form id="capture-form" novalidate>
+      <div class="form-group">
+        <label for="name">Name</label>
+        <input type="text" id="name" name="name" required autocomplete="name" placeholder="Your full name">
+        <div class="form-error" id="name-error">Name is required</div>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" required autocomplete="email" inputmode="email" placeholder="you@company.com">
+        <div class="form-error" id="email-error">Valid email is required</div>
+      </div>
+
+      <div class="form-group">
+        <label for="phone">Phone</label>
+        <input type="tel" id="phone" name="phone" required autocomplete="tel" inputmode="tel" placeholder="(555) 123-4567">
+        <div class="form-error" id="phone-error">Phone number is required</div>
+      </div>
+
+      <div class="form-group">
+        <label for="industry">Industry</label>
+        <select id="industry" name="industry" required>
+          <option value="" disabled selected>Select your industry</option>
+          <option value="Event Planner / Coordinator">Event Planner / Coordinator</option>
+          <option value="Photographer">Photographer</option>
+          <option value="Videographer">Videographer</option>
+          <option value="Rental / Production Company">Rental / Production Company</option>
+          <option value="Floral / Design / Creative">Floral / Design / Creative</option>
+          <option value="Hospitality / Hotel">Hospitality / Hotel</option>
+          <option value="DJ / Entertainment">DJ / Entertainment</option>
+          <option value="Other">Other</option>
+        </select>
+        <div class="form-error" id="industry-error">Industry selection is required</div>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Start Quiz</button>
+    </form>
+  </div>
+
+  <script>
+    const form = document.getElementById('capture-form');
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const name = document.getElementById('name');
+      const email = document.getElementById('email');
+      const phone = document.getElementById('phone');
+      const industry = document.getElementById('industry');
+
+      // Reset errors
+      [name, email, phone, industry].forEach(function (el) {
+        el.classList.remove('invalid');
+      });
+      document.querySelectorAll('.form-error').forEach(function (el) {
+        el.classList.remove('visible');
+      });
+
+      let valid = true;
+
+      if (!name.value.trim()) {
+        name.classList.add('invalid');
+        document.getElementById('name-error').classList.add('visible');
+        valid = false;
+      }
+
+      if (!email.value.trim() || !email.value.includes('@') || !email.value.includes('.')) {
+        email.classList.add('invalid');
+        document.getElementById('email-error').classList.add('visible');
+        valid = false;
+      }
+
+      if (!phone.value.trim()) {
+        phone.classList.add('invalid');
+        document.getElementById('phone-error').classList.add('visible');
+        valid = false;
+      }
+
+      if (!industry.value) {
+        industry.classList.add('invalid');
+        document.getElementById('industry-error').classList.add('visible');
+        valid = false;
+      }
+
+      if (!valid) return;
+
+      sessionStorage.setItem('rsvp_user', JSON.stringify({
+        name: name.value.trim(),
+        email: email.value.trim(),
+        phone: phone.value.trim(),
+        industry: industry.value
+      }));
+
+      window.location.href = '/quiz.html';
+    });
+  </script>
+</body>
+</html>

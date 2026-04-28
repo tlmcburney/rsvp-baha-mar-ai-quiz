@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0a1628">
+  <title>RSVP Baha Mar — Complete</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="logo-bar">
+    <div class="logo-mcburney" role="img" aria-label="McBurney Group Logo">McBurney</div>
+    <div class="logo-alain" role="img" aria-label="Alain Martinez Logo">Alain M.</div>
+  </div>
+
+  <div class="container text-center">
+    <div class="complete-icon">&#10003;</div>
+    <h1 class="page-title">You're All Set</h1>
+    <p class="page-subtitle">
+      Your personalized results are on their way to<br>
+      <span class="complete-email" id="user-email"></span>
+    </p>
+    <p class="page-subtitle" style="margin-top: 24px; font-size: 0.9rem;">
+      Check your inbox after the session for your action items.
+    </p>
+  </div>
+
+  <script>
+    var email = sessionStorage.getItem('rsvp_email') || '';
+    if (email) {
+      document.getElementById('user-email').textContent = email;
+    } else {
+      document.getElementById('user-email').textContent = 'your inbox';
+    }
+    // Clean up session storage
+    sessionStorage.removeItem('rsvp_user');
+    sessionStorage.removeItem('rsvp_email');
+  </script>
+</body>
+</html>
