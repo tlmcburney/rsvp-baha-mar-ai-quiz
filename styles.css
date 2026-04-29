@@ -89,9 +89,9 @@ body {
 
 .logo-alain {
   background-image: var(--logo-alain);
-  background-color: var(--primary-light);
-  color: var(--alain-accent);
-  border: 1px solid var(--alain-accent);
+  background-color: #ffffff;
+  color: #111111;
+  border: 1px solid #ffffff;
 }
 
 /* ========================================
