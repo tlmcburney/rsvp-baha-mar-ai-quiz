@@ -64,7 +64,8 @@ body {
 
 .logo-mcburney,
 .logo-alain {
-  width: 120px;
+  width: auto;
+  padding: 0 16px;
   height: 48px;
   border-radius: 8px;
   display: flex;
