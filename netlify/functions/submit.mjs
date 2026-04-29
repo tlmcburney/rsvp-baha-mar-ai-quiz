@@ -151,7 +151,7 @@ async function sendEmail(name, email, answers) {
   // TODO: Replace from address with verified domain when available
   const { error } = await resend.emails.send(
     {
-      from: "RSVP Baha Mar <onboarding@resend.dev>",
+      from: "RSVP Baha Mar <noreply@themcburneygroup.com>",
       to: [email],
       subject: "Your AI Readiness Results — RSVP Baha Mar",
       html,
