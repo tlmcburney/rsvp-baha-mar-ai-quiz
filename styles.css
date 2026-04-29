@@ -64,17 +64,17 @@ body {
 
 .logo-mcburney,
 .logo-alain {
-  height: 48px;
+  height: 72px;
   border-radius: 8px;
   object-fit: contain;
 }
 
 .logo-mcburney {
-  height: 48px;
+  height: 72px;
 }
 
 .logo-alain {
-  height: 40px;
+  height: 60px;
   background: #ffffff;
   padding: 6px 12px;
   border-radius: 8px;
