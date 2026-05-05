@@ -148,19 +148,15 @@ async function sendEmail(name, email, answers) {
 </body>
 </html>`;
 
-  // TODO: Replace from address with verified domain when available
-  const { error } = await resend.emails.send(
-    {
-      from: "RSVP Baha Mar <noreply@themcburneygroup.com>",
-      to: [email],
-      subject: "Your AI Readiness Results — RSVP Baha Mar",
-      html,
-    },
-    { idempotencyKey: `rsvp-results/${email}` }
-  );
+  const { data, error } = await resend.emails.send({
+    from: "RSVP Baha Mar <noreply@themcburneygroup.com>",
+    to: [email],
+    subject: "Your AI Readiness Results — RSVP Baha Mar",
+    html,
+  });
 
   if (error) {
-    console.error("Resend error:", error.message);
+    console.error("Resend error:", JSON.stringify(error));
   }
 }
 
