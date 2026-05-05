@@ -54,12 +54,10 @@ export default async function handler(req, context) {
     );
   }
 
-  // Send email (fire-and-forget — don't block the response)
-  sendEmail(name, email, answers).catch((err) => {
-    console.error("Email send failed:", err);
-  });
+  // Send email — await so we can surface errors for debugging
+  const emailResult = await sendEmail(name, email, answers);
 
-  return new Response(JSON.stringify({ ok: true }), {
+  return new Response(JSON.stringify({ ok: true, email: emailResult }), {
     status: 200,
     headers: { "Content-Type": "application/json" },
   });
@@ -148,15 +146,22 @@ async function sendEmail(name, email, answers) {
 </body>
 </html>`;
 
-  const { data, error } = await resend.emails.send({
-    from: "RSVP Baha Mar <noreply@themcburneygroup.com>",
-    to: [email],
-    subject: "Your AI Readiness Results — RSVP Baha Mar",
-    html,
-  });
+  try {
+    const { data, error } = await resend.emails.send({
+      from: "RSVP Baha Mar <noreply@themcburneygroup.com>",
+      to: [email],
+      subject: "Your AI Readiness Results — RSVP Baha Mar",
+      html,
+    });
 
-  if (error) {
-    console.error("Resend error:", JSON.stringify(error));
+    if (error) {
+      console.error("Resend error:", JSON.stringify(error));
+      return { error: error };
+    }
+    return { sent: true, id: data?.id };
+  } catch (err) {
+    console.error("Email exception:", err.message);
+    return { error: err.message };
   }
 }
 
