@@ -25,6 +25,43 @@
     </p>
   </div>
 
+  <!-- Questions Section -->
+  <div class="container" id="questions-section">
+    <div style="border-top: 1px solid var(--primary-light); margin-bottom: 32px;"></div>
+
+    <h2 class="page-title" style="font-size: 1.25rem; margin-bottom: 8px;">Have Questions?</h2>
+    <p class="page-subtitle" style="margin-bottom: 32px;">We'll respond via email after the event.</p>
+
+    <!-- AI Questions -->
+    <div class="form-group">
+      <label for="ai-input">Questions About AI</label>
+      <textarea id="ai-input" rows="3" placeholder="Type your question about AI..." style="width:100%; padding:14px 16px; font-size:1rem; font-family:inherit; background:var(--primary-light); color:var(--text); border:2px solid transparent; border-radius:var(--radius); outline:none; resize:vertical; transition:border-color var(--transition);"></textarea>
+      <button type="button" class="btn btn-secondary mt-16" id="add-ai-btn" style="font-size: 0.9rem; padding: 10px;">Add Question</button>
+      <ul id="ai-list" style="list-style:none; margin-top:12px;"></ul>
+    </div>
+
+    <!-- Group Questions -->
+    <div class="form-group" style="margin-top: 24px;">
+      <label for="group-input">Group Questions</label>
+      <textarea id="group-input" rows="3" placeholder="Type a question for the group..." style="width:100%; padding:14px 16px; font-size:1rem; font-family:inherit; background:var(--primary-light); color:var(--text); border:2px solid transparent; border-radius:var(--radius); outline:none; resize:vertical; transition:border-color var(--transition);"></textarea>
+      <button type="button" class="btn btn-secondary mt-16" id="add-group-btn" style="font-size: 0.9rem; padding: 10px;">Add Question</button>
+      <ul id="group-list" style="list-style:none; margin-top:12px;"></ul>
+    </div>
+
+    <button type="button" class="btn btn-primary mt-24" id="submit-questions-btn" disabled>Submit Questions</button>
+
+    <div class="error-message mt-16" id="questions-error">Something went wrong. Please try again.</div>
+
+    <p style="margin-top: 16px;">
+      <a href="#" id="skip-link" style="color: var(--text-muted); font-size: 0.85rem; text-decoration: underline;">Skip</a>
+    </p>
+  </div>
+
+  <!-- Confirmation after submit -->
+  <div class="container text-center hidden" id="questions-confirmed">
+    <p class="page-subtitle" style="color: var(--success);">Questions submitted. We'll follow up via email.</p>
+  </div>
+
   <script>
     var email = sessionStorage.getItem('rsvp_email') || '';
     if (email) {
@@ -32,9 +69,115 @@
     } else {
       document.getElementById('user-email').textContent = 'your inbox';
     }
-    // Clean up session storage
-    sessionStorage.removeItem('rsvp_user');
-    sessionStorage.removeItem('rsvp_email');
+
+    var aiQuestions = [];
+    var groupQuestions = [];
+    var aiInput = document.getElementById('ai-input');
+    var groupInput = document.getElementById('group-input');
+    var aiList = document.getElementById('ai-list');
+    var groupList = document.getElementById('group-list');
+    var submitBtn = document.getElementById('submit-questions-btn');
+    var errorEl = document.getElementById('questions-error');
+
+    function updateSubmitBtn() {
+      submitBtn.disabled = aiQuestions.length === 0 && groupQuestions.length === 0;
+    }
+
+    function renderList(list, items) {
+      list.innerHTML = '';
+      items.forEach(function (text, i) {
+        var li = document.createElement('li');
+        li.style.cssText = 'background:var(--primary-light); border-radius:8px; padding:10px 14px; margin-bottom:8px; font-size:0.9rem; color:var(--text); display:flex; justify-content:space-between; align-items:flex-start; gap:12px; text-align:left;';
+        var span = document.createElement('span');
+        span.textContent = text;
+        span.style.flex = '1';
+        var removeBtn = document.createElement('button');
+        removeBtn.textContent = '\u00d7';
+        removeBtn.style.cssText = 'background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer; padding:0; line-height:1;';
+        removeBtn.dataset.index = i;
+        removeBtn.dataset.type = list === aiList ? 'ai' : 'group';
+        li.appendChild(span);
+        li.appendChild(removeBtn);
+        list.appendChild(li);
+      });
+    }
+
+    // Add AI question
+    document.getElementById('add-ai-btn').addEventListener('click', function () {
+      var val = aiInput.value.trim();
+      if (!val) return;
+      aiQuestions.push(val);
+      aiInput.value = '';
+      renderList(aiList, aiQuestions);
+      updateSubmitBtn();
+    });
+
+    // Add Group question
+    document.getElementById('add-group-btn').addEventListener('click', function () {
+      var val = groupInput.value.trim();
+      if (!val) return;
+      groupQuestions.push(val);
+      groupInput.value = '';
+      renderList(groupList, groupQuestions);
+      updateSubmitBtn();
+    });
+
+    // Remove question on × click
+    document.addEventListener('click', function (e) {
+      if (!e.target.dataset.type) return;
+      var idx = parseInt(e.target.dataset.index, 10);
+      if (e.target.dataset.type === 'ai') {
+        aiQuestions.splice(idx, 1);
+        renderList(aiList, aiQuestions);
+      } else {
+        groupQuestions.splice(idx, 1);
+        renderList(groupList, groupQuestions);
+      }
+      updateSubmitBtn();
+    });
+
+    // Submit questions
+    submitBtn.addEventListener('click', function () {
+      if (aiQuestions.length === 0 && groupQuestions.length === 0) return;
+      submitBtn.disabled = true;
+      errorEl.classList.remove('visible');
+
+      fetch('/api/questions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email,
+          ai_questions: aiQuestions,
+          group_questions: groupQuestions
+        })
+      })
+      .then(function (res) {
+        if (!res.ok) throw new Error('Server error: ' + res.status);
+        return res.json();
+      })
+      .then(function () {
+        document.getElementById('questions-section').classList.add('hidden');
+        document.getElementById('questions-confirmed').classList.remove('hidden');
+        cleanup();
+      })
+      .catch(function (err) {
+        console.error('Questions submit failed:', err);
+        errorEl.classList.add('visible');
+        submitBtn.disabled = false;
+      });
+    });
+
+    // Skip
+    document.getElementById('skip-link').addEventListener('click', function (e) {
+      e.preventDefault();
+      document.getElementById('questions-section').classList.add('hidden');
+      cleanup();
+    });
+
+    function cleanup() {
+      sessionStorage.removeItem('rsvp_user');
+      sessionStorage.removeItem('rsvp_email');
+    }
   </script>
 </body>
 </html>
