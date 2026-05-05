@@ -119,7 +119,7 @@ async function sendEmail(name, email, answers) {
               <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
                 <tr>
                   <td style="padding-right: 12px;">
-                    <a href="mailto:alain@alainmartinez.com?subject=RSVP%20Baha%20Mar%20Follow-Up" style="display: inline-block; padding: 12px 24px; background: #0a1628; color: #ffffff; font-size: 14px; font-weight: 700; text-decoration: none; border-radius: 8px;">Contact Alain</a>
+                    <a href="mailto:contact@alainmartinez.com?subject=RSVP%20Baha%20Mar%20Follow-Up" style="display: inline-block; padding: 12px 24px; background: #0a1628; color: #ffffff; font-size: 14px; font-weight: 700; text-decoration: none; border-radius: 8px;">Contact Alain</a>
                   </td>
                   <td>
                     <a href="mailto:travis@themcburneygroup.com?subject=RSVP%20Baha%20Mar%20Follow-Up" style="display: inline-block; padding: 12px 24px; background: #d4a843; color: #0a1628; font-size: 14px; font-weight: 700; text-decoration: none; border-radius: 8px;">Contact Travis</a>
