@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0a1628">
+  <title>RSVP Baha Mar — Your Group</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="logo-bar">
+    <img class="logo-alain" src="/assets/alain-logo.svg" alt="Alain Martinez Studio Logo">
+    <img class="logo-mcburney" src="/assets/mcburney-logo.jpg" alt="The McBurney Group Logo">
+  </div>
+
+  <div class="container text-center">
+    <p class="page-subtitle" style="margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.85rem;">Your Breakout Group</p>
+
+    <div class="group-number" id="group-number"></div>
+    <div class="group-name" id="group-name"></div>
+
+    <div class="group-callout">
+      Remember this number when we break into groups later in the session.
+    </div>
+
+    <button class="btn btn-primary" id="start-btn" style="margin-top: 32px;">Start the Assessment</button>
+  </div>
+
+  <script>
+    // Guard: redirect if no user data
+    var userData = null;
+    try {
+      userData = JSON.parse(sessionStorage.getItem('rsvp_user'));
+    } catch (e) {}
+    if (!userData || !userData.name || !userData.email || !userData.industry) {
+      window.location.href = '/';
+    }
+
+    // Group mapping (must match lib/questions.mjs groupMap)
+    var groupMap = {
+      'Event Planner / Coordinator': { number: 1, name: 'Event Planners' },
+      'Photographer':                { number: 2, name: 'Visual Creatives' },
+      'Videographer':                { number: 2, name: 'Visual Creatives' },
+      'Floral / Design / Creative':  { number: 3, name: 'Design & Creative' },
+      'Rental / Production Company': { number: 4, name: 'Production & Rentals' },
+      'Hospitality / Hotel':         { number: 5, name: 'Hospitality' },
+      'DJ / Entertainment':          { number: 6, name: 'Entertainment' },
+      'Not Listed':                  { number: 7, name: 'Not Listed' }
+    };
+
+    var group = groupMap[userData.industry] || { number: 7, name: 'Not Listed' };
+
+    // Store group in sessionStorage for submit payload
+    userData.group_number = group.number;
+    userData.group_name = group.name;
+    sessionStorage.setItem('rsvp_user', JSON.stringify(userData));
+
+    // Render
+    document.getElementById('group-number').textContent = group.number;
+    document.getElementById('group-name').textContent = group.name;
+
+    document.getElementById('start-btn').addEventListener('click', function () {
+      window.location.href = '/quiz.html';
+    });
+  </script>
+</body>
+</html>

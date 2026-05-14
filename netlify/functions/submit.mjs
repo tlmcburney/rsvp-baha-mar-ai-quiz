@@ -1,5 +1,5 @@
 import { supabase } from "./lib/supabase.mjs";
-import { questions, questionMap } from "./lib/questions.mjs";
+import { questions, questionMap, getGroup } from "./lib/questions.mjs";
 import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -37,6 +37,9 @@ export default async function handler(req, context) {
     );
   }
 
+  // Derive group from industry (server-side, can't be spoofed)
+  const group = getGroup(industry);
+
   // Insert into Supabase (critical path)
   const { error: dbError } = await supabase.from("responses").insert({
     name,
@@ -44,6 +47,8 @@ export default async function handler(req, context) {
     phone: phone || null,
     industry,
     answers,
+    group_number: group.number,
+    group_name: group.name,
   });
 
   if (dbError) {
@@ -55,7 +60,7 @@ export default async function handler(req, context) {
   }
 
   // Send email — await so we can surface errors for debugging
-  const emailResult = await sendEmail(name, email, answers);
+  const emailResult = await sendEmail(name, email, answers, group);
 
   return new Response(JSON.stringify({ ok: true, email: emailResult }), {
     status: 200,
@@ -63,7 +68,7 @@ export default async function handler(req, context) {
   });
 }
 
-async function sendEmail(name, email, answers) {
+async function sendEmail(name, email, answers, group) {
   // Build all 20 question rows — show every question with result
   const questionRows = questions
     .map((q) => {
@@ -151,6 +156,20 @@ async function sendEmail(name, email, answers) {
             <td style="padding: 32px 24px 16px;">
               <p style="margin: 0; font-size: 16px; color: #0a1628;">Hi ${escapeHtml(name)},</p>
               <p style="margin: 12px 0 0; font-size: 14px; color: #374151; line-height: 1.6;">Thanks for completing the RSVP Baha Mar quiz! Here are your results for all 20 questions.</p>
+            </td>
+          </tr>
+          <!-- Group Assignment -->
+          <tr>
+            <td style="padding: 8px 24px 16px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #0a1628; border-radius: 8px; overflow: hidden;">
+                <tr>
+                  <td style="padding: 20px 24px; text-align: center;">
+                    <p style="margin: 0 0 4px; font-size: 12px; color: #8899aa; text-transform: uppercase; letter-spacing: 0.1em;">Your Breakout Group</p>
+                    <p style="margin: 0; font-size: 36px; font-weight: 900; color: #d4a843;">${group.number}</p>
+                    <p style="margin: 4px 0 0; font-size: 14px; color: #8899aa;">${escapeHtml(group.name)}</p>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
           <!-- All 20 Questions -->

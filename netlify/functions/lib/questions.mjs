@@ -148,5 +148,26 @@ export const industries = [
   "Floral / Design / Creative",
   "Hospitality / Hotel",
   "DJ / Entertainment",
-  "Other",
+  "Not Listed",
 ];
+
+/**
+ * Group assignment matrix — maps industry to breakout group.
+ * Groups 1-6 are industry-specific, Group 7 catches "Not Listed".
+ * Photographers and Videographers share Group 2 (visual creatives).
+ */
+export const groupMap = {
+  "Event Planner / Coordinator": { number: 1, name: "Event Planners" },
+  "Photographer":                { number: 2, name: "Visual Creatives" },
+  "Videographer":                { number: 2, name: "Visual Creatives" },
+  "Floral / Design / Creative":  { number: 3, name: "Design & Creative" },
+  "Rental / Production Company": { number: 4, name: "Production & Rentals" },
+  "Hospitality / Hotel":         { number: 5, name: "Hospitality" },
+  "DJ / Entertainment":          { number: 6, name: "Entertainment" },
+  "Not Listed":                  { number: 7, name: "Not Listed" },
+};
+
+/** Look up group for an industry string. Falls back to Group 7. */
+export function getGroup(industry) {
+  return groupMap[industry] || { number: 7, name: "Not Listed" };
+}

@@ -156,8 +156,14 @@
         return res.json();
       })
       .then(function () {
-        document.getElementById('questions-section').classList.add('hidden');
+        // Show confirmation inline but keep the form visible for more questions
         document.getElementById('questions-confirmed').classList.remove('hidden');
+        // Clear the submitted questions from the local lists
+        aiQuestions = [];
+        groupQuestions = [];
+        renderList(aiList, aiQuestions);
+        renderList(groupList, groupQuestions);
+        updateSubmitBtn();
         cleanup();
       })
       .catch(function (err) {
@@ -167,16 +173,15 @@
       });
     });
 
-    // Skip
+    // Skip — just scroll to top, don't hide the section
     document.getElementById('skip-link').addEventListener('click', function (e) {
       e.preventDefault();
-      document.getElementById('questions-section').classList.add('hidden');
-      cleanup();
+      window.scrollTo(0, 0);
     });
 
     function cleanup() {
-      sessionStorage.removeItem('rsvp_user');
-      sessionStorage.removeItem('rsvp_email');
+      // Session data intentionally preserved so attendees can return
+      // to submit more questions throughout the session
     }
   </script>
 </body>

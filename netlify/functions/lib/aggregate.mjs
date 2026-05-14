@@ -32,7 +32,7 @@ export function aggregate(rows) {
   // Industry breakdown: { "Photographer": { count, questions: { a1: { yes, no }, ... } } }
   const industryMap = {};
   for (const row of rows) {
-    const ind = row.industry || "Other";
+    const ind = row.industry || "Not Listed";
     if (!industryMap[ind]) {
       industryMap[ind] = { count: 0, questions: {} };
     }

@@ -342,6 +342,38 @@ body {
 }
 
 /* ========================================
+   GROUP ASSIGNMENT PAGE
+   ======================================== */
+
+.group-number {
+  font-size: clamp(5rem, 20vw, 8rem);
+  font-weight: 900;
+  color: var(--accent);
+  line-height: 1;
+  margin: 24px 0 8px;
+}
+
+.group-name {
+  font-size: 1.25rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 32px;
+}
+
+.group-callout {
+  background: var(--primary-light);
+  border-left: 4px solid var(--accent);
+  padding: 16px 20px;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  font-size: 1rem;
+  color: var(--text);
+  line-height: 1.5;
+  text-align: left;
+}
+
+/* ========================================
    COMPLETE PAGE
    ======================================== */
 
