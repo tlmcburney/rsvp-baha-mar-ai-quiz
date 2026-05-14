@@ -76,15 +76,15 @@ export const questions = [
   // ── Travis's questions ─────────────────────────────────
   {
     id: "t1",
-    text: "Do you spend more time on your business or in your business?",
+    text: "Do you spend more time growing your business than running it?",
     rec: "You are stuck in execution mode. AI can handle the repetitive work so you can focus on growth.",
-    triggerOn: "no", // Yes = on your business (good), No = in your business (needs help)
+    triggerOn: "no", // Yes = focused on growth (good), No = stuck running (needs help)
   },
   {
     id: "t2",
-    text: "Are you spending hours doing manual or repetitive tasks every single day, week, or event?",
+    text: "Have you eliminated the manual, repetitive tasks from your daily and weekly workflow?",
     rec: "You are losing hours every week to tasks a system could handle. That time is recoverable.",
-    triggerOn: "yes", // Yes means they ARE wasting time — inverted question
+    triggerOn: "no", // Yes = eliminated (good), No = still doing manual tasks (needs help)
   },
   {
     id: "t3",
@@ -118,8 +118,8 @@ export const questions = [
   },
   {
     id: "t8",
-    text: "If you were out sick for a week, would your business keep moving without you?",
-    rec: "Your business is fragile. One sick week reveals every process that only lives in your head.",
+    text: "Are your core business processes documented well enough for someone else to follow?",
+    rec: "If your processes live only in your head, your business is one bad day away from chaos. Documenting them is a one-time investment that pays off permanently.",
     triggerOn: "no",
   },
   {
